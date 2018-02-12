@@ -7,8 +7,9 @@ public class Boid {
   PVector velocity;
   PVector acceleration;
   PVector avgColor;
-  float maxforce;    // Maximum steering force
-  float maxspeed;    // Maximum speed
+  float maxForce;    // Maximum steering force
+  float maxSpeed;    // Maximum speed
+  float scale = 0.5;
 
   float desiredSeparation = 25.0f; // magnitude apart
 
@@ -28,8 +29,9 @@ public class Boid {
 
     avgColor = new PVector(0, 0, 0); // start with black
     position = new PVector(x, y);
-    maxspeed = w + h;
-    maxforce = 0.03;
+    maxSpeed = (w + h) / 2;
+    //maxSpeed = 0;
+    maxForce = 0.03;
 
     imgSrcX = imgX;
     imgSrcY = imgY;
@@ -73,7 +75,7 @@ public class Boid {
     // Update velocity
     velocity.add(acceleration);
     // Limit speed
-    velocity.limit(maxspeed);
+    velocity.limit(maxSpeed);
     position.add(velocity);
     // Reset accelertion to 0 each cycle
     acceleration.mult(0);
@@ -84,27 +86,27 @@ public class Boid {
   public PVector seek(PVector target) {
     PVector desired = PVector.sub(target, position);  // A vector pointing from the position to the target
     // Scale to maximum speed
-    desired.setMag(maxspeed);
+    desired.setMag(maxSpeed);
 
     // Steering = Desired minus Velocity
     PVector steer = PVector.sub(desired, velocity);
-    steer.limit(maxforce);  // Limit to maximum steering force
+    steer.limit(maxForce);  // Limit to maximum steering force
     return steer;
   }
 
   public void render() {
     // Draw a triangle rotated in the direction of velocity
     float theta = velocity.heading() + radians(90);
-
+    PImage imgChunk = img.get(imgSrcX, imgSrcY, chunkWidth, chunkHeight);
     fill(200, 100);
     stroke(255);
     pushMatrix();
     translate(position.x, position.y);
     rotate(theta);
+    scale(scale);
 
     // Draw the image chunk
-    //rect(0, 0, chunkWidth, chunkHeight);
-    image(img.get(imgSrcX, imgSrcY, chunkWidth, chunkHeight), 0, 0);
+    image(imgChunk, 0, 0);
 
     popMatrix();
   }
@@ -125,6 +127,8 @@ public class Boid {
     // For every boid in the system, check if it's too close
     for (Boid other : boids) {
       float d = PVector.dist(position, other.position);
+      //d += PVector.dist(avgColor, other.avgColor);
+      d += Math.abs(avgColor.x - other.avgColor.x); // red
       // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
       if ((d > 0) && (d < desiredSeparation)) {
         // Calculate vector pointing away from neighbor
@@ -143,9 +147,9 @@ public class Boid {
     // As long as the vector is greater than 0
     if (steer.mag() > 0) {
       // Implement Reynolds: Steering = Desired - Velocity
-      steer.setMag(maxspeed);
+      steer.setMag(maxSpeed);
       steer.sub(velocity);
-      steer.limit(maxforce);
+      steer.limit(maxForce);
     }
     return steer;
   }
@@ -166,9 +170,9 @@ public class Boid {
     if (count > 0) {
       sum.div((float)count);
       // Implement Reynolds: Steering = Desired - Velocity
-      sum.setMag(maxspeed);
+      sum.setMag(maxSpeed);
       PVector steer = PVector.sub(sum, velocity);
-      steer.limit(maxforce);
+      steer.limit(maxForce);
       return steer;
     } else {
       return new PVector(0, 0);
@@ -198,18 +202,25 @@ public class Boid {
 
   public void aggregateColor() {
     PVector agg = new PVector(0, 0, 0);
-    for (int i = imgSrcX; i < imgSrcX + chunkWidth; i++) {
-      for (int j = imgSrcY; j < imgSrcY + chunkHeight; j++) {
-        int index = (width-i-1) + j*width;
+    int xMax = constrain(imgSrcX + chunkWidth, 0, img.width);
+    int yMax = constrain(imgSrcY + chunkHeight, 0, img.height);
+    int sampleWidth = 10;
+    int sampleHeight = 10;
+    int total = 0;
+    for (int i = imgSrcX; i < xMax; i+=sampleWidth) {
+      for (int j = imgSrcY; j < yMax; j+=sampleHeight) {
+        //int index = (img.width-i-1) + j*img.width;
+        int index = (img.width-i-1) + j*img.width;
+        //println(index, img.pixels.length);
         agg.x += img.pixels[index] >> 16 & 0xFF;
         agg.y += img.pixels[index] >> 8 & 0xFF;
         agg.z += img.pixels[index] & 0xFF;
+        total++;
       }
     }
-    int total = chunkWidth * chunkHeight;
     agg.x /= total;
     agg.y /= total;
     agg.z /= total;
-    println(agg);
+    this.avgColor = agg;
   }
 }

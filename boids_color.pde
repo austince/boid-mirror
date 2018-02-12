@@ -47,9 +47,9 @@ void draw() {
     PImage flipped = flipImageOverX(camera);
     
     background(50);
-    flipped.loadPixels();
+    //flipped.loadPixels();
     flock.run(flipped);
-    flipped.updatePixels();
+    //flipped.updatePixels();
   }
 }
 
