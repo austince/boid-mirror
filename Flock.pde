@@ -8,9 +8,9 @@ class Flock {
     boids = new ArrayList<Boid>(); // Initialize the ArrayList
   }
 
-  public void run() {
+  public void run(PImage img) {
     for (Boid b : boids) {
-      b.run(boids);  // Passing the entire list of boids to each boid individually
+      b.run(boids, img);  // Passing the entire list of boids to each boid individually
     }
   }
 

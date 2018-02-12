@@ -8,32 +8,33 @@ public class Boid {
   PVector acceleration;
   float maxforce;    // Maximum steering force
   float maxspeed;    // Maximum speed
-
+  
+  float desiredSeparation = 25.0f; // magnitude apart
+ 
   // For image
   int chunkWidth, chunkHeight;
   int imgSrcX, imgSrcY;
-
+  PImage img;
+  
   Boid(float x, float y, int imgX, int imgY, int w, int h) {
     acceleration = new PVector(0, 0);
 
-    // This is a new PVector method not yet implemented in JS
-    // velocity = PVector.random2D();
-
-    // Leaving the code temporarily this way so that this example runs in JS
-    float angle = random(TWO_PI);
-    velocity = new PVector(cos(angle), sin(angle));
+    velocity = PVector.random2D();
 
     position = new PVector(x, y);
-    maxspeed = 2;
+    maxspeed = 2 * ((chunkWidth + chunkHeight) / 2);
     maxforce = 0.03;
 
     imgSrcX = imgX;
     imgSrcY = imgY;
     chunkWidth = w;
     chunkHeight = h;
+    
+    desiredSeparation = (chunkWidth + chunkHeight) / 2 * 1.5;
   }
 
-  public void run(ArrayList<Boid> boids) {
+  public void run(ArrayList<Boid> boids, PImage img) {
+    this.img = img;
     flock(boids);
     update();
     borders();
@@ -76,12 +77,7 @@ public class Boid {
   public PVector seek(PVector target) {
     PVector desired = PVector.sub(target, position);  // A vector pointing from the position to the target
     // Scale to maximum speed
-    desired.normalize();
-    desired.mult(maxspeed);
-
-    // Above two lines of code below could be condensed with new PVector setMag() method
-    // Not using this method until Processing.js catches up
-    // desired.setMag(maxspeed);
+    desired.setMag(maxspeed);
 
     // Steering = Desired minus Velocity
     PVector steer = PVector.sub(desired, velocity);
@@ -91,8 +87,7 @@ public class Boid {
 
   public void render() {
     // Draw a triangle rotated in the direction of velocity
-    float theta = velocity.heading2D() + radians(90);
-    // heading2D() above is now heading() but leaving old syntax until Processing.js catches up
+    float theta = velocity.heading() + radians(90);
 
     fill(200, 100);
     stroke(255);
@@ -101,8 +96,9 @@ public class Boid {
     rotate(theta);
 
     // Draw the image chunk
-    rect(0, 0, chunkWidth, chunkHeight);
-
+    //rect(0, 0, chunkWidth, chunkHeight);
+    image(img.get(imgSrcX, imgSrcY, chunkWidth, chunkHeight), 0, 0);
+    
     popMatrix();
   }
 
@@ -117,14 +113,13 @@ public class Boid {
   // Separation
   // Method checks for nearby boids and steers away
   public PVector separate (ArrayList<Boid> boids) {
-    float desiredseparation = 25.0f;
     PVector steer = new PVector(0, 0, 0);
     int count = 0;
     // For every boid in the system, check if it's too close
     for (Boid other : boids) {
       float d = PVector.dist(position, other.position);
       // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
-      if ((d > 0) && (d < desiredseparation)) {
+      if ((d > 0) && (d < desiredSeparation)) {
         // Calculate vector pointing away from neighbor
         PVector diff = PVector.sub(position, other.position);
         diff.normalize();
@@ -140,13 +135,8 @@ public class Boid {
 
     // As long as the vector is greater than 0
     if (steer.mag() > 0) {
-      // First two lines of code below could be condensed with new PVector setMag() method
-      // Not using this method until Processing.js catches up
-      // steer.setMag(maxspeed);
-
       // Implement Reynolds: Steering = Desired - Velocity
-      steer.normalize();
-      steer.mult(maxspeed);
+      steer.setMag(maxspeed);
       steer.sub(velocity);
       steer.limit(maxforce);
     }
@@ -168,13 +158,8 @@ public class Boid {
     }
     if (count > 0) {
       sum.div((float)count);
-      // First two lines of code below could be condensed with new PVector setMag() method
-      // Not using this method until Processing.js catches up
-      // sum.setMag(maxspeed);
-
       // Implement Reynolds: Steering = Desired - Velocity
-      sum.normalize();
-      sum.mult(maxspeed);
+      sum.setMag(maxspeed);
       PVector steer = PVector.sub(sum, velocity);
       steer.limit(maxforce);
       return steer;
