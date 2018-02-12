@@ -43,8 +43,23 @@ String getCameraBySpecs(int w, int h, int fps) {
 void draw() {
   if (camera.available()) {
     camera.read(); 
+
+    PImage flipped = flipImageOverX(camera);
+    
     background(50);
     //image(camera, 0, 0);
-    flock.run(camera);
+    flock.run(flipped);
   }
+}
+
+
+PImage flipImageOverX(PImage img) {
+  PImage flipped = createImage(img.width, img.height, RGB);//create a new image with the same dimensions
+  for (int i = 0; i < flipped.pixels.length; i++) {       //loop through each pixel
+    int srcX = i % flipped.width;                        //calculate source(original) x position
+    int dstX = flipped.width-srcX-1;                     //calculate destination(flipped) x position = (maximum-x-1)
+    int y    = i / flipped.width;                        //calculate y coordinate
+    flipped.pixels[y*flipped.width+dstX] = img.pixels[i];//write the destination(x flipped) pixel based on the current pixel
+  }
+  return flipped;
 }

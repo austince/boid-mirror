@@ -6,6 +6,7 @@ public class Boid {
   PVector position;
   PVector velocity;
   PVector acceleration;
+  PVector avgColor;
   float maxforce;    // Maximum steering force
   float maxspeed;    // Maximum speed
   
@@ -16,13 +17,18 @@ public class Boid {
   int imgSrcX, imgSrcY;
   PImage img;
   
+  float separationWeight = 1.5;
+  float alignmentWeight = 1.0;
+  float cohesionWeight = 1.0;
+  
   Boid(float x, float y, int imgX, int imgY, int w, int h) {
     acceleration = new PVector(0, 0);
 
     velocity = PVector.random2D();
-
+    
+    avgColor = new PVector(0, 0, 0); // start with black
     position = new PVector(x, y);
-    maxspeed = 2 * ((chunkWidth + chunkHeight) / 2);
+    maxspeed = w + h;
     maxforce = 0.03;
 
     imgSrcX = imgX;
@@ -52,9 +58,9 @@ public class Boid {
     PVector ali = align(boids);      // Alignment
     PVector coh = cohesion(boids);   // Cohesion
     // Arbitrarily weight these forces
-    sep.mult(1.5);
-    ali.mult(1.0);
-    coh.mult(1.0);
+    sep.mult(separationWeight);
+    ali.mult(alignmentWeight);
+    coh.mult(cohesionWeight);
     // Add the force vectors to acceleration
     applyForce(sep);
     applyForce(ali);
