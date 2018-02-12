@@ -9,23 +9,23 @@ public class Boid {
   PVector avgColor;
   float maxforce;    // Maximum steering force
   float maxspeed;    // Maximum speed
-  
+
   float desiredSeparation = 25.0f; // magnitude apart
- 
+
   // For image
   int chunkWidth, chunkHeight;
   int imgSrcX, imgSrcY;
   PImage img;
-  
+
   float separationWeight = 1.5;
   float alignmentWeight = 1.0;
   float cohesionWeight = 1.0;
-  
+
   Boid(float x, float y, int imgX, int imgY, int w, int h) {
     acceleration = new PVector(0, 0);
 
     velocity = PVector.random2D();
-    
+
     avgColor = new PVector(0, 0, 0); // start with black
     position = new PVector(x, y);
     maxspeed = w + h;
@@ -35,12 +35,13 @@ public class Boid {
     imgSrcY = imgY;
     chunkWidth = w;
     chunkHeight = h;
-    
+
     desiredSeparation = (chunkWidth + chunkHeight) / 2 * 1.5;
   }
 
   public void run(ArrayList<Boid> boids, PImage img) {
     this.img = img;
+    aggregateColor();
     flock(boids);
     update();
     borders();
@@ -104,7 +105,7 @@ public class Boid {
     // Draw the image chunk
     //rect(0, 0, chunkWidth, chunkHeight);
     image(img.get(imgSrcX, imgSrcY, chunkWidth, chunkHeight), 0, 0);
-    
+
     popMatrix();
   }
 
@@ -193,5 +194,22 @@ public class Boid {
     } else {
       return new PVector(0, 0);
     }
+  }
+
+  public void aggregateColor() {
+    PVector agg = new PVector(0, 0, 0);
+    for (int i = imgSrcX; i < imgSrcX + chunkWidth; i++) {
+      for (int j = imgSrcY; j < imgSrcY + chunkHeight; j++) {
+        int index = (width-i-1) + j*width;
+        agg.x += img.pixels[index] >> 16 & 0xFF;
+        agg.y += img.pixels[index] >> 8 & 0xFF;
+        agg.z += img.pixels[index] & 0xFF;
+      }
+    }
+    int total = chunkWidth * chunkHeight;
+    agg.x /= total;
+    agg.y /= total;
+    agg.z /= total;
+    println(agg);
   }
 }
