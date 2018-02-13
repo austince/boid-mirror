@@ -119,8 +119,8 @@ public class Boid {
 
     // Draw the image chunk
     imageMode(CENTER);
-    // tint(colorFromVector(avgColor));
-    tint(colorFromVector(tintColor));
+    tint(colorFromVector(avgColor));
+    // tint(colorFromVector(tintColor));
     image(imgChunk, 0, 0);
 
     popMatrix();
@@ -134,13 +134,13 @@ public class Boid {
     if (position.y > height+chunkHeight) position.y = -chunkHeight;
 
     // lower color bounds
-    if (avgColor.x < 0) tintColor.x = 255;
-    if (tintColor.y < 0) tintColor.y = 255;
-    if (tintColor.z < 0) tintColor.z = 255;
+    if (avgColor.x < 0) avgColor.x = 255;
+    if (avgColor.y < 0) avgColor.y = 255;
+    if (avgColor.z < 0) avgColor.z = 255;
     // upper color bounds
-    if (tintColor.x > 0) tintColor.x = 0;
-    if (tintColor.y > 0) tintColor.y = 0;
-    if (tintColor.z > 0) tintColor.z = 0;
+    if (avgColor.x > 0) avgColor.x = 0;
+    if (avgColor.y > 0) avgColor.y = 0;
+    if (avgColor.z > 0) avgColor.z = 0;
   }
 
   // A method that calculates and applies a steering force towards a target
