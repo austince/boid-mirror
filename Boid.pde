@@ -33,6 +33,7 @@ public class Boid {
     acceleration = new PVector(0, 0);
 
     velocity = PVector.random2D();
+    colorVel = new PVector(0, 0, 0);
 
     avgColor = new PVector(0, 0, 0); // start with black
     position = new PVector(x, y);
@@ -182,9 +183,9 @@ public class Boid {
     }
 
   if (colorSteer.mag() > 0) {
-      steer.setMag(maxSpeed);
-      steer.sub(colorVel);
-      steer.limit(maxForce);
+      colorSteer.setMag(maxSpeed);
+      colorSteer.sub(colorVel);
+      colorSteer.limit(maxForce);
   }
 
     return steer;
