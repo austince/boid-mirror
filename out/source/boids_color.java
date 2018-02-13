@@ -1,3 +1,87 @@
+import processing.core.*; 
+import processing.data.*; 
+import processing.event.*; 
+import processing.opengl.*; 
+
+import processing.video.*; 
+
+import java.util.HashMap; 
+import java.util.ArrayList; 
+import java.io.File; 
+import java.io.BufferedReader; 
+import java.io.PrintWriter; 
+import java.io.InputStream; 
+import java.io.OutputStream; 
+import java.io.IOException; 
+
+public class boids_color extends PApplet {
+
+  
+Flock flock;
+
+Capture camera;      // instance of the Capture class, subclass of PImage
+
+final int chunkWidth = 50;
+final int chunkHeight = 50;
+
+public void setup() {
+  
+  flock = new Flock();
+
+  String cam = getCameraBySpecs(width, height, 30);
+  if (cam == null) {
+    println("Can't find our camera.");
+    exit();
+  }
+  camera = new Capture(this, cam);
+  camera.start();
+
+  // Add an initial set of boids into the system
+  for (int i = 0; i < width; i+= chunkWidth) {
+    for (int j = 0; j < height; j+= chunkHeight) {
+      flock.addBoid(new Boid(i, j, i, j, chunkWidth, chunkHeight));
+    }
+  }
+}
+
+
+public String getCameraBySpecs(int w, int h, int fps) {
+  String camFound = null;
+
+  String[] cameras = Capture.list();
+  for (String cam : cameras) {
+    if (cam.indexOf("size=" + w + "x" + h + ",fps=" + fps) >= 0) {
+      camFound = cam;
+      break;
+    }
+  }
+  return camFound;
+}
+
+public void draw() {
+  if (camera.available()) {
+    camera.read(); 
+
+    PImage flipped = flipImageOverX(camera);
+    
+    background(50);
+    flipped.loadPixels();
+    flock.run(flipped);
+    flipped.updatePixels();
+  }
+}
+
+
+public PImage flipImageOverX(PImage img) {
+  PImage flipped = createImage(img.width, img.height, RGB);//create a new image with the same dimensions
+  for (int i = 0; i < flipped.pixels.length; i++) {       //loop through each pixel
+    int srcX = i % flipped.width;                        //calculate source(original) x position
+    int dstX = flipped.width-srcX-1;                     //calculate destination(flipped) x position = (maximum-x-1)
+    int y    = i / flipped.width;                        //calculate y coordinate
+    flipped.pixels[y*flipped.width+dstX] = img.pixels[i];//write the destination(x flipped) pixel based on the current pixel
+  }
+  return flipped;
+}
 // The Boid class
 
 public class Boid {
@@ -14,7 +98,7 @@ public class Boid {
   PVector avgColor;
   float maxForce;    // Maximum steering force
   float maxSpeed;    // Maximum speed
-  float scale = 0.75;
+  float scale = 0.75f;
   float mass = 1;
 
   float desiredSeparation = 25.0f; // magnitude apart
@@ -25,9 +109,9 @@ public class Boid {
   int imgSrcX, imgSrcY;
   PImage img;
 
-  float separationWeight = 1.0;
-  float alignmentWeight = 1.5;
-  float cohesionWeight = 1.5;
+  float separationWeight = 1.0f;
+  float alignmentWeight = 1.5f;
+  float cohesionWeight = 1.5f;
 
   Boid(float x, float y, int imgX, int imgY, int w, int h) {
     acceleration = new PVector(0, 0);
@@ -39,7 +123,7 @@ public class Boid {
     tintColor = new PVector(0, 0, 0);
     maxSpeed = (w + h) / 2;
     //maxSpeed = 0;
-    maxForce = 0.03;
+    maxForce = 0.03f;
 
     imgSrcX = imgX;
     imgSrcY = imgY;
@@ -140,7 +224,7 @@ public class Boid {
     // For every boid in the system, check if it's too close
     for (Boid other : boids) {
       float d = PVector.dist(position, other.position);
-      float dColor = PVector.dist(avgColor, other.avgColor);
+      float dColor = PVector.dist(avgColor, other.avgColor) / 255;
       //println("dColor:", dColor);
       //d = (d + dColor) / 2;
       //d += PVector.dist(avgColor, other.avgColor);
@@ -158,10 +242,10 @@ public class Boid {
       // Do the same with color
       if ((dColor > 0) && (dColor < desiredColorSep)) {
            PVector diff = PVector.sub(position, other.position);
-          diff.normalize();
-          diff.div(d);        // Weight by distance
-          colorSteer.add(diff);
-          colorCount++;            // Keep track of how many
+        diff.normalize();
+        diff.div(d);        // Weight by distance
+        steer.add(diff);
+        colorCount++;            // Keep track of how many
       }
     }
     // Average -- divide by how many
@@ -170,7 +254,7 @@ public class Boid {
     }
 
     if (colorCount > 0) {
-      colorSteer.div((float) colorCount);
+      
     }
 
     // As long as the vector is greater than 0
@@ -180,13 +264,6 @@ public class Boid {
       steer.sub(velocity);
       steer.limit(maxForce);
     }
-
-  if (colorSteer.mag() > 0) {
-      steer.setMag(maxSpeed);
-      steer.sub(colorVel);
-      steer.limit(maxForce);
-  }
-
     return steer;
   }
 
@@ -258,5 +335,38 @@ public class Boid {
     agg.y /= total;
     agg.z /= total;
     this.avgColor = agg;
+  }
+}
+
+// The Flock (a list of Boid objects)
+
+class Flock {
+  ArrayList<Boid> boids; // An ArrayList for all the boids
+
+  public Flock() {
+    boids = new ArrayList<Boid>(); // Initialize the ArrayList
+  }
+
+  public void run(PImage img) {
+    for (Boid b : boids) {
+      b.run(boids, img);  // Passing the entire list of boids to each boid individually
+    }
+  }
+
+  public void addBoid(Boid b) {
+    boids.add(b);
+  }
+}
+public int colorFromVector(PVector vec) {
+  return color(vec.x, vec.y, vec.z);
+}
+  public void settings() {  size(1280, 720); }
+  static public void main(String[] passedArgs) {
+    String[] appletArgs = new String[] { "boids_color" };
+    if (passedArgs != null) {
+      PApplet.main(concat(appletArgs, passedArgs));
+    } else {
+      PApplet.main(appletArgs);
+    }
   }
 }
