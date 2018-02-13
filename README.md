@@ -20,3 +20,9 @@ I used [Processing's Example](https://processing.org/examples/flocking.html) of 
 
 ## Video
 [Watch it here on Vimeo](https://vimeo.com/255647357)
+
+### Other Screenshots
+While developing this, I did a bunch of experiments. I saved the decent ones do their own branches. Here are what they looked like:
+
+Colored Quadrants:
+
