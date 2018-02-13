@@ -31,8 +31,10 @@ public class Boid {
 
   Boid(float x, float y, int imgX, int imgY, int w, int h) {
     acceleration = new PVector(0, 0);
+    colorAcc = acceleration.copy();
 
     velocity = PVector.random2D();
+    colorVel = velocity.copy();
 
     avgColor = new PVector(0, 0, 0); // start with black
     position = new PVector(x, y);
@@ -122,6 +124,7 @@ public class Boid {
     tint(colorFromVector(avgColor));
     // tint(colorFromVector(tintColor));
     image(imgChunk, 0, 0);
+    println(avgColor);
 
     popMatrix();
   }
@@ -242,7 +245,7 @@ public class Boid {
       if ((dColor > 0) && (dColor < desiredColorSep)) {
            PVector diff = PVector.sub(tintColor, other.tintColor);
           diff.normalize();
-          diff.div(d);        // Weight by distance
+          diff.div(dColor);        // Weight by distance
           colorSteer.add(diff);
           colorCount++;            // Keep track of how many
       }
@@ -253,9 +256,9 @@ public class Boid {
     }
 
   if (colorSteer.mag() > 0) {
-      steer.setMag(maxSpeed);
-      steer.sub(colorVel);
-      steer.limit(maxForce);
+      colorSteer.setMag(maxSpeed);
+      colorSteer.sub(colorVel);
+      colorSteer.limit(maxForce);
   }
 
     return colorSteer;
