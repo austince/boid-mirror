@@ -71,7 +71,7 @@ public class Boid {
 
     PVector colorSep = separateColor(boids);
     PVector colorAli = alignColor(boids);
-    PVector colorCoh = colorCoh(boids);
+    PVector colorCoh = colorCohension(boids);
     
     // Arbitrarily weight these forces
     colorSep.mult(separationWeight);
@@ -200,7 +200,7 @@ public class Boid {
           colorSteer.add(diff);
           colorCount++;            // Keep track of how many
       }
-    }G
+    }
     // Average -- divide by how many
     if (count > 0) {
       steer.div((float)count);
