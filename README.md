@@ -25,6 +25,7 @@ I used [Processing's Example](https://processing.org/examples/flocking.html) of 
 While developing this, I did a bunch of experiments. I saved the decent ones do their own branches. Here are what they looked like:
 
 Colored Quadrants:
+![](./screenshots/colored-quadrants.png)
 
 Rotated Squares:
 ![](./screenshots/rotated-squares.png)
