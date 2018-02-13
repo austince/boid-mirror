@@ -10,12 +10,14 @@ void setup() {
   size(1280, 720);
   flock = new Flock();
 
-  String cam = getCameraBySpecs(width, height, 30);
-  if (cam == null) {
+  String camId = getCameraBySpecs(width, height, 30);
+  if (camId == null) {
     println("Can't find our camera.");
-    exit();
+    // exit();
+    // Just get first camera so it doesn't break
+    camId = getFirstCamera();
   }
-  camera = new Capture(this, cam);
+  camera = new Capture(this, camId);
   camera.start();
 
   // Add an initial set of boids into the system
@@ -26,14 +28,18 @@ void setup() {
   }
 }
 
+String getFirstCamera() {
+  String[] cameras = Capture.list();
+  return cameras[0];
+}
 
 String getCameraBySpecs(int w, int h, int fps) {
   String camFound = null;
 
   String[] cameras = Capture.list();
-  for (String cam : cameras) {
-    if (cam.indexOf("size=" + w + "x" + h + ",fps=" + fps) >= 0) {
-      camFound = cam;
+  for (String camId : cameras) {
+    if (camId.indexOf("size=" + w + "x" + h + ",fps=" + fps) >= 0) {
+      camFound = camId;
       break;
     }
   }

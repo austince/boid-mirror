@@ -18,7 +18,9 @@ public class Boid {
   float mass = 1;
 
   float desiredSeparation = 25.0f; // magnitude apart
-  float desiredColorSep = 25.0f;
+  float desiredColorSep = 20.0f;
+
+  float colorNeighborDist  = 250;
   
   // For image
   int chunkWidth, chunkHeight;
@@ -31,16 +33,21 @@ public class Boid {
 
   Boid(float x, float y, int imgX, int imgY, int w, int h) {
     acceleration = new PVector(0, 0);
-    colorAcc = acceleration.copy();
+    colorAcc = new PVector(0, 0, 0);
 
     velocity = PVector.random2D();
-    colorVel = velocity.copy();
+    // colorVel = velocity.copy();
+    colorVel = new PVector(0, 0, 0);
+    colorVel.x = random(0, 255);
+    colorVel.y = random(0, 255);
+    colorVel.z = random(0, 255);
 
-    avgColor = new PVector(0, 0, 0); // start with black
     position = new PVector(x, y);
+    avgColor = new PVector(0, 0, 0); // start with black
     tintColor = new PVector(0, 0, 0);
     maxSpeed = (w + h) / 2;
-    //maxSpeed = 0;
+    // maxSpeed = 0;
+    // maxSpeed = 10;
     maxForce = 0.03;
 
     imgSrcX = imgX;
@@ -53,7 +60,8 @@ public class Boid {
 
   public void run(ArrayList<Boid> boids, PImage img) {
     this.img = img;
-    aggregateColor(); // Get the average color in the chunk
+    this.avgColor = sampleColor(); // Get the average color in the chunk
+    this.tintColor = avgColor.copy();
     flock(boids);
     update();
     borders();
@@ -71,15 +79,23 @@ public class Boid {
     PVector ali = align(boids);      // Alignment
     PVector coh = cohesion(boids);   // Cohesion
 
-    PVector colorSep = separateColor(boids);
-    PVector colorAli = alignColor(boids);
-    PVector colorCoh = colorCohension(boids);
+    //  println("cSep", sep);
+    // println("cAli", ali);
+    // println("cCoh", coh);
+
+//  Color flocking not working
+    // PVector colorSep = separateColor(boids);
+    // PVector colorAli = alignColor(boids);
+    // PVector colorCoh = colorCohension(boids);
     
     // Arbitrarily weight these forces
-    colorSep.mult(separationWeight);
-    colorAli.mult(alignmentWeight);
-    colorCoh.mult(cohesionWeight);
-     
+    // colorSep.mult(separationWeight);
+    // colorAli.mult(alignmentWeight);
+    // colorCoh.mult(cohesionWeight);
+    //  println("cSep", colorSep);
+    // println("cAli", colorAli);
+    // println("cCoh", colorCoh);
+
     sep.mult(separationWeight);
     ali.mult(alignmentWeight);
     coh.mult(cohesionWeight);
@@ -89,23 +105,25 @@ public class Boid {
     applyForce(acceleration, ali);
     applyForce(acceleration, coh);
 
-    applyForce(colorAcc, colorSep);
-    applyForce(colorAcc, colorAli);
-    applyForce(colorAcc, colorCoh);
+    // applyForce(colorAcc, colorSep);
+    // applyForce(colorAcc, colorAli);
+    // applyForce(colorAcc, colorCoh);
   }
 
   // Method to update position
   public void update() {
     // Update velocity
     velocity.add(acceleration);
-    velocity.add(colorAcc);
+    // colorVel.add(colorAcc);
+    // println("colorAcc",  colorAcc);
     // Limit speed
-    colorVel.limit(maxSpeed);
-    velocity.limit(maxSpeed);
-    //position.add(velocity);
-    avgColor.add(velocity);
+        velocity.limit(maxSpeed);
+    // colorVel.limit(maxSpeed);
+    
+    // position.add(velocity);
+    // avgColor.add(colorVel);
     // Reset accelertion to 0 each cycle
-    colorAcc.mult(0);
+    // colorAcc.mult(0);
     acceleration.mult(0);
   }
 
@@ -121,10 +139,10 @@ public class Boid {
 
     // Draw the image chunk
     imageMode(CENTER);
-    tint(colorFromVector(avgColor));
-    // tint(colorFromVector(tintColor));
+    // tint(colorFromVector(avgColor));
+    tint(colorFromVector(tintColor));
     image(imgChunk, 0, 0);
-    println(avgColor);
+    // println(avgColor);
 
     popMatrix();
   }
@@ -180,11 +198,7 @@ public class Boid {
     // For every boid in the system, check if it's too close
     for (Boid other : boids) {
       float d = PVector.dist(position, other.position);
-      float dColor = PVector.dist(avgColor, other.avgColor);
-      //println("dColor:", dColor);
-      //d = (d + dColor) / 2;
-      //d += PVector.dist(avgColor, other.avgColor);
-      //d += Math.abs(avgColor.x - other.avgColor.x); // red
+
       // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
       if ((d > 0) && (d < desiredSeparation)) {
         // Calculate vector pointing away from neighbor
@@ -194,23 +208,10 @@ public class Boid {
         steer.add(diff);
         count++;            // Keep track of how many
       }
-      
-      // Do the same with color
-      if ((dColor > 0) && (dColor < desiredColorSep)) {
-           PVector diff = PVector.sub(position, other.position);
-          diff.normalize();
-          diff.div(d);        // Weight by distance
-          colorSteer.add(diff);
-          colorCount++;            // Keep track of how many
-      }
     }
     // Average -- divide by how many
     if (count > 0) {
       steer.div((float)count);
-    }
-
-    if (colorCount > 0) {
-      colorSteer.div((float) colorCount);
     }
 
     // As long as the vector is greater than 0
@@ -221,17 +222,11 @@ public class Boid {
       steer.limit(maxForce);
     }
 
-  if (colorSteer.mag() > 0) {
-      steer.setMag(maxSpeed);
-      steer.sub(colorVel);
-      steer.limit(maxForce);
-  }
-
     return steer;
   }
 
   private PVector separateColor(ArrayList<Boid> boids) {
-    PVector colorSteer = new PVector(0, 0, 0);;
+    PVector colorSteer = new PVector(0, 0, 0);
     int colorCount = 0;
     // For every boid in the system, check if it's too close
     for (Boid other : boids) {
@@ -243,7 +238,7 @@ public class Boid {
       // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
       
       if ((dColor > 0) && (dColor < desiredColorSep)) {
-           PVector diff = PVector.sub(tintColor, other.tintColor);
+           PVector diff = PVector.sub(avgColor, other.avgColor);
           diff.normalize();
           diff.div(dColor);        // Weight by distance
           colorSteer.add(diff);
@@ -290,12 +285,11 @@ public class Boid {
   }
 
 public PVector alignColor(ArrayList<Boid> boids) {
-    float neighborDist = 50;
     PVector sum = new PVector(0, 0);
     int count = 0;
     for (Boid other : boids) {
-      float d = PVector.dist(tintColor, other.tintColor);
-      if ((d > 0) && (d < neighborDist)) {
+      float d = PVector.dist(avgColor, other.avgColor);
+      if ((d > 0) && (d < colorNeighborDist)) {
         sum.add(other.colorVel);
         count++;
       }
@@ -316,7 +310,7 @@ public PVector alignColor(ArrayList<Boid> boids) {
   // Cohesion
   // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
   public PVector cohesion (ArrayList<Boid> boids) {
-    float neighbordist = 50;
+        float neighbordist = 50;
     PVector sum = new PVector(0, 0);   // Start with empty vector to accumulate all positions
     int count = 0;
     for (Boid other : boids) {
@@ -335,12 +329,11 @@ public PVector alignColor(ArrayList<Boid> boids) {
   }
 
   public PVector colorCohension(ArrayList<Boid> boids) {
-    float neighbordist = 50;
     PVector sum = new PVector(0, 0);   // Start with empty vector to accumulate all positions
     int count = 0;
     for (Boid other : boids) {
       float d = PVector.dist(avgColor, other.avgColor);
-      if ((d > 0) && (d < neighbordist)) {
+      if ((d > 0) && (d < colorNeighborDist)) {
         sum.add(other.avgColor); // Add position
         count++;
       }
@@ -353,7 +346,7 @@ public PVector alignColor(ArrayList<Boid> boids) {
     }
   }
 
-  public void aggregateColor() {
+  public PVector  sampleColor() {
     PVector agg = new PVector(0, 0, 0);
     int xMax = constrain(imgSrcX + chunkWidth, 0, img.width);
     int yMax = constrain(imgSrcY + chunkHeight, 0, img.height);
@@ -374,6 +367,6 @@ public PVector alignColor(ArrayList<Boid> boids) {
     agg.x /= total;
     agg.y /= total;
     agg.z /= total;
-    this.avgColor = agg;
+   return agg;
   }
 }
