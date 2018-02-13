@@ -5,7 +5,7 @@ I also tried applying the Boid Algorithm to the <R,G,B> colorspace but was also 
 
 The final mirror abstracts what is sees into smaller chunks and tries to mirror an average color. The effect is something of a shadow.
 From afar, the "shadow" and the object will be indistinguishable. You can only see the granular differences and the rotation of the individual chunks upon closer
-inspection.
+inspection. The final result really doesn't need the Boid Algorithm at all but it is an interesting relic to how we got here. 
 
 ## Boid Algorithm
 I used [Processing's Example](https://processing.org/examples/flocking.html) of the Boid algorithm to start. 
