@@ -14,6 +14,8 @@ I used [Processing's Example](https://processing.org/examples/flocking.html) of 
 My sketches were kind of all over the place with this project. I went through many ideas before settling on the mosaic Boid movement, which ended up where I did most of my sketching.
 
 [Sketches Folder](./sketches)  
+![](./sketches/initial-xsmall.jpg)
+![](./sketches/floating-xsmall.jpg)
 ![](./sketches/chunks-xsmall.jpg)
 
 
